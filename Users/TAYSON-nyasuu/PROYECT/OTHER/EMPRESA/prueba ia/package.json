@@ -1,0 +1,23 @@
+{
+  "name": "gemini-proxy-vercel",
+  "version": "1.0.0",
+  "description": "Proxy para Google Gemini API en Vercel Serverless Functions",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step needed for static files'",
+    "start": "vercel dev"
+  },
+  "keywords": [
+    "gemini",
+    "google-ai",
+    "vercel",
+    "serverless",
+    "proxy"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  }
+}

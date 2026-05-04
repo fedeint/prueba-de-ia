@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba Gemini API Proxy</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        input, textarea, button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .response {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #4285f4;
+            border-radius: 5px;
+        }
+        .error {
+            border-left-color: #ea4335;
+            background-color: #fce8e6;
+        }
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Prueba Gemini API con Vercel Proxy</h1>
+        
+        <div>
+            <label for="apiKey">🔑 API Key de Google AI Studio:</label>
+            <input type="password" id="apiKey" placeholder="AIza..." />
+        </div>
+        
+        <div>
+            <label for="prompt">💬 Mensaje para Gemini:</label>
+            <textarea id="prompt" rows="4" placeholder="Escribe tu mensaje aquí...">Hola, ¿cómo estás?</textarea>
+        </div>
+        
+        <button id="sendBtn" onclick="sendMessage()">Enviar mensaje</button>
+        
+        <div id="response"></div>
+    </div>
+
+    <script>
+        // Guardar API key en localStorage
+        document.getElementById('apiKey').addEventListener('change', (e) => {
+            if (e.target.value) {
+                localStorage.setItem('gemini_key', e.target.value);
+            }
+        });
+
+        // Cargar API key guardada
+        window.addEventListener('load', () => {
+            const savedKey = localStorage.getItem('gemini_key');
+            if (savedKey) {
+                document.getElementById('apiKey').value = savedKey;
+            }
+        });
+
+        async function sendMessage() {
+            const apiKey = document.getElementById('apiKey').value;
+            const prompt = document.getElementById('prompt').value;
+            const responseDiv = document.getElementById('response');
+            const sendBtn = document.getElementById('sendBtn');
+
+            if (!apiKey || !prompt) {
+                responseDiv.innerHTML = '<div class="response error">⚠️ Por favor, completa ambos campos.</div>';
+                return;
+            }
+
+            // Mostrar estado de carga
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Enviando...';
+            responseDiv.innerHTML = '<div class="response loading">🤔 Pensando...</div>';
+
+            try {
+                const res = await fetch('/api/gemini', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, apiKey })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'Error en la solicitud');
+                }
+
+                // Extraer respuesta de Gemini
+                const geminiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (geminiResponse) {
+                    responseDiv.innerHTML = `
+                        <div class="response">
+                            <strong>✅ Respuesta de Gemini:</strong><br><br>
+                            ${geminiResponse.replace(/\n/g, '<br>')}
+                        </div>
+                    `;
+                } else {
+                    responseDiv.innerHTML = `
+                        <div class="response error">
+                            ⚠️ Respuesta inesperada de la API
+                        </div>
+                    `;
+                }
+
+            } catch (error) {
+                responseDiv.innerHTML = `
+                    <div class="response error">
+                        <strong>❌ Error:</strong> ${error.message}
+                    </div>
+                `;
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Enviar mensaje';
+            }
+        }
+    </script>
+</body>
+</html>
